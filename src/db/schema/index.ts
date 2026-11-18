@@ -1296,6 +1296,8 @@ export const chatConversations = sqliteTable("chat_conversations", {
 	createdByUserId: text("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
 	createdAt: timestamp("created_at").notNull().$defaultFn(() => new Date()),
 	lastMessageAt: integer("last_message_at").notNull().default(0),
+	// Who may start new messages in a space: everyone, only owner/admins, or admins post and everyone replies in threads.
+	postPolicy: text("post_policy", { enum: ["everyone", "admins", "admins_threads"] }).notNull().default("everyone"),
 }, (t) => [
 	uniqueIndex("chat_conversations_direct_key_idx").on(t.directKey),
 ]);
@@ -1304,7 +1306,7 @@ export const chatMembers = sqliteTable("chat_members", {
 	id: text("id").primaryKey(),
 	conversationId: text("conversation_id").notNull().references(() => chatConversations.id, { onDelete: "cascade" }),
 	userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-	role: text("role", { enum: ["owner", "member"] }).notNull().default("member"),
+	role: text("role", { enum: ["owner", "admin", "member"] }).notNull().default("member"),
 	lastReadAt: integer("last_read_at").notNull().default(0),
 	joinedAt: timestamp("joined_at").notNull().$defaultFn(() => new Date()),
 }, (t) => [
@@ -1320,9 +1322,56 @@ export const chatMessages = sqliteTable("chat_messages", {
 	sentAt: integer("sent_at").notNull(),
 	editedAt: integer("edited_at"),
 	deletedAt: integer("deleted_at"),
+	// Thread replies point at their top-level message; the parent keeps a reply count for the main timeline.
+	parentMessageId: text("parent_message_id"),
+	replyCount: integer("reply_count").notNull().default(0),
+	lastReplyAt: integer("last_reply_at"),
+	stickerId: text("sticker_id"),
 }, (t) => [
 	index("chat_messages_conversation_sent_idx").on(t.conversationId, t.sentAt),
 	index("chat_messages_sender_idx").on(t.senderUserId),
+	index("chat_messages_parent_idx").on(t.parentMessageId, t.sentAt),
+]);
+
+// Files sent in chat. Uploaded first (messageId null), then claimed by the message that sends them.
+export const chatAttachments = sqliteTable("chat_attachments", {
+	id: text("id").primaryKey(),
+	conversationId: text("conversation_id").notNull().references(() => chatConversations.id, { onDelete: "cascade" }),
+	messageId: text("message_id"),
+	uploaderUserId: text("uploader_user_id").references(() => users.id, { onDelete: "set null" }),
+	name: text("name").notNull(),
+	contentType: text("content_type").notNull(),
+	size: integer("size").notNull(),
+	r2Key: text("r2_key").notNull(),
+	createdAt: integer("created_at").notNull(),
+}, (t) => [
+	index("chat_attachments_message_idx").on(t.messageId),
+	index("chat_attachments_conversation_idx").on(t.conversationId),
+	index("chat_attachments_uploader_idx").on(t.uploaderUserId, t.createdAt),
+]);
+
+export const chatReactions = sqliteTable("chat_reactions", {
+	id: text("id").primaryKey(),
+	messageId: text("message_id").notNull().references(() => chatMessages.id, { onDelete: "cascade" }),
+	userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+	emoji: text("emoji").notNull(),
+	createdAt: integer("created_at").notNull(),
+}, (t) => [
+	uniqueIndex("chat_reactions_message_user_emoji_idx").on(t.messageId, t.userId, t.emoji),
+]);
+
+// Custom stickers and GIFs shared by everyone on this installation.
+export const chatStickers = sqliteTable("chat_stickers", {
+	id: text("id").primaryKey(),
+	kind: text("kind", { enum: ["sticker", "gif"] }).notNull().default("sticker"),
+	name: text("name").notNull(),
+	contentType: text("content_type").notNull(),
+	size: integer("size").notNull(),
+	r2Key: text("r2_key").notNull(),
+	createdByUserId: text("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
+	createdAt: integer("created_at").notNull(),
+}, (t) => [
+	index("chat_stickers_kind_idx").on(t.kind, t.createdAt),
 ]);
 
 export const importJobs = sqliteTable("import_jobs", {
@@ -1381,6 +1430,9 @@ export const schema = {
 	chatConversations,
 	chatMembers,
 	chatMessages,
+	chatAttachments,
+	chatReactions,
+	chatStickers,
 	auditLogs,
 	backupSettings,
 	backups,

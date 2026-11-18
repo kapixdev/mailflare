@@ -21,6 +21,15 @@ function truncate(value: string, max: number) {
 	return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat;
 }
 
+/** What a push notification shows when a message has no text: the sticker or the first file. */
+function previewText(message: ChatMessageDto): string {
+	if (message.body.trim()) return message.body;
+	if (message.sticker) return message.sticker.kind === "gif" ? `GIF · ${message.sticker.name}` : `Sticker · ${message.sticker.name}`;
+	const first = message.attachments[0];
+	if (first) return message.attachments.length > 1 ? `📎 ${first.name} +${message.attachments.length - 1}` : `📎 ${first.name}`;
+	return "New message";
+}
+
 /** Delivers a new message live to every member and as a push notification to everyone but the sender. */
 export async function notifyChatMessage(
 	env: CloudflareEnv,
@@ -34,7 +43,7 @@ export async function notifyChatMessage(
 		broadcastChatEvent(env, memberUserIds, { type: "chat", event: "message", conversationId: message.conversationId, message }),
 		sendPushContent(env, recipients, {
 			title: truncate(conversation.type === "space" && conversation.name ? `${sender} · ${conversation.name}` : sender, 180),
-			body: truncate(message.body, 160),
+			body: truncate(previewText(message), 160),
 			tag: `chat-${message.conversationId}`,
 			url: `/chat?c=${encodeURIComponent(message.conversationId)}`,
 		}),

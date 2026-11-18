@@ -379,6 +379,30 @@
         "CREATE INDEX \"chat_messages_conversation_sent_idx\" ON \"chat_messages\" USING btree (\"conversation_id\",\"sent_at\");",
         "CREATE INDEX \"chat_messages_sender_idx\" ON \"chat_messages\" USING btree (\"sender_user_id\");"
       ]
+    },
+    {
+      "name": "0013_chat_advanced.sql",
+      "statements": [
+        "ALTER TABLE \"chat_conversations\" ADD COLUMN \"post_policy\" text DEFAULT 'everyone' NOT NULL;",
+        "ALTER TABLE \"chat_messages\" ADD COLUMN \"parent_message_id\" text;",
+        "ALTER TABLE \"chat_messages\" ADD COLUMN \"reply_count\" bigint DEFAULT 0 NOT NULL;",
+        "ALTER TABLE \"chat_messages\" ADD COLUMN \"last_reply_at\" bigint;",
+        "ALTER TABLE \"chat_messages\" ADD COLUMN \"sticker_id\" text;",
+        "CREATE TABLE \"chat_attachments\" (\n\t\"id\" text PRIMARY KEY NOT NULL,\n\t\"conversation_id\" text NOT NULL,\n\t\"message_id\" text,\n\t\"uploader_user_id\" text,\n\t\"name\" text NOT NULL,\n\t\"content_type\" text NOT NULL,\n\t\"size\" bigint NOT NULL,\n\t\"r2_key\" text NOT NULL,\n\t\"created_at\" bigint NOT NULL\n);",
+        "CREATE TABLE \"chat_reactions\" (\n\t\"id\" text PRIMARY KEY NOT NULL,\n\t\"message_id\" text NOT NULL,\n\t\"user_id\" text NOT NULL,\n\t\"emoji\" text NOT NULL,\n\t\"created_at\" bigint NOT NULL\n);",
+        "CREATE TABLE \"chat_stickers\" (\n\t\"id\" text PRIMARY KEY NOT NULL,\n\t\"kind\" text DEFAULT 'sticker' NOT NULL,\n\t\"name\" text NOT NULL,\n\t\"content_type\" text NOT NULL,\n\t\"size\" bigint NOT NULL,\n\t\"r2_key\" text NOT NULL,\n\t\"created_by_user_id\" text,\n\t\"created_at\" bigint NOT NULL\n);",
+        "ALTER TABLE \"chat_attachments\" ADD CONSTRAINT \"chat_attachments_conversation_id_chat_conversations_id_fk\" FOREIGN KEY (\"conversation_id\") REFERENCES \"public\".\"chat_conversations\"(\"id\") ON DELETE cascade ON UPDATE no action;",
+        "ALTER TABLE \"chat_attachments\" ADD CONSTRAINT \"chat_attachments_uploader_user_id_users_id_fk\" FOREIGN KEY (\"uploader_user_id\") REFERENCES \"public\".\"users\"(\"id\") ON DELETE set null ON UPDATE no action;",
+        "ALTER TABLE \"chat_reactions\" ADD CONSTRAINT \"chat_reactions_message_id_chat_messages_id_fk\" FOREIGN KEY (\"message_id\") REFERENCES \"public\".\"chat_messages\"(\"id\") ON DELETE cascade ON UPDATE no action;",
+        "ALTER TABLE \"chat_reactions\" ADD CONSTRAINT \"chat_reactions_user_id_users_id_fk\" FOREIGN KEY (\"user_id\") REFERENCES \"public\".\"users\"(\"id\") ON DELETE cascade ON UPDATE no action;",
+        "ALTER TABLE \"chat_stickers\" ADD CONSTRAINT \"chat_stickers_created_by_user_id_users_id_fk\" FOREIGN KEY (\"created_by_user_id\") REFERENCES \"public\".\"users\"(\"id\") ON DELETE set null ON UPDATE no action;",
+        "CREATE INDEX \"chat_messages_parent_idx\" ON \"chat_messages\" USING btree (\"parent_message_id\",\"sent_at\");",
+        "CREATE INDEX \"chat_attachments_message_idx\" ON \"chat_attachments\" USING btree (\"message_id\");",
+        "CREATE INDEX \"chat_attachments_conversation_idx\" ON \"chat_attachments\" USING btree (\"conversation_id\");",
+        "CREATE INDEX \"chat_attachments_uploader_idx\" ON \"chat_attachments\" USING btree (\"uploader_user_id\",\"created_at\");",
+        "CREATE UNIQUE INDEX \"chat_reactions_message_user_emoji_idx\" ON \"chat_reactions\" USING btree (\"message_id\",\"user_id\",\"emoji\");",
+        "CREATE INDEX \"chat_stickers_kind_idx\" ON \"chat_stickers\" USING btree (\"kind\",\"created_at\");"
+      ]
     }
   ]
 }

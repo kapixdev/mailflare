@@ -352,6 +352,29 @@
         "CREATE INDEX `chat_messages_conversation_sent_idx` ON `chat_messages` (`conversation_id`,`sent_at`);",
         "CREATE INDEX `chat_messages_sender_idx` ON `chat_messages` (`sender_user_id`);"
       ]
+    },
+    {
+      "name": "0013_chat_advanced.sql",
+      "statements": [
+        "ALTER TABLE `chat_conversations` ADD `post_policy` varchar(64) NOT NULL DEFAULT 'everyone';",
+        "ALTER TABLE `chat_messages` ADD `parent_message_id` varchar(191);",
+        "ALTER TABLE `chat_messages` ADD `reply_count` bigint NOT NULL DEFAULT 0;",
+        "ALTER TABLE `chat_messages` ADD `last_reply_at` bigint;",
+        "ALTER TABLE `chat_messages` ADD `sticker_id` varchar(191);",
+        "CREATE TABLE `chat_attachments` (\n\t`id` varchar(191) NOT NULL,\n\t`conversation_id` varchar(191) NOT NULL,\n\t`message_id` varchar(191),\n\t`uploader_user_id` varchar(191),\n\t`name` longtext NOT NULL,\n\t`content_type` varchar(255) NOT NULL,\n\t`size` bigint NOT NULL,\n\t`r2_key` varchar(512) NOT NULL,\n\t`created_at` bigint NOT NULL,\n\tCONSTRAINT `chat_attachments_id` PRIMARY KEY(`id`)\n);",
+        "CREATE TABLE `chat_reactions` (\n\t`id` varchar(191) NOT NULL,\n\t`message_id` varchar(191) NOT NULL,\n\t`user_id` varchar(191) NOT NULL,\n\t`emoji` varchar(64) NOT NULL,\n\t`created_at` bigint NOT NULL,\n\tCONSTRAINT `chat_reactions_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `chat_reactions_message_user_emoji_idx` UNIQUE(`message_id`,`user_id`,`emoji`)\n);",
+        "CREATE TABLE `chat_stickers` (\n\t`id` varchar(191) NOT NULL,\n\t`kind` varchar(64) NOT NULL DEFAULT 'sticker',\n\t`name` longtext NOT NULL,\n\t`content_type` varchar(255) NOT NULL,\n\t`size` bigint NOT NULL,\n\t`r2_key` varchar(512) NOT NULL,\n\t`created_by_user_id` varchar(191),\n\t`created_at` bigint NOT NULL,\n\tCONSTRAINT `chat_stickers_id` PRIMARY KEY(`id`)\n);",
+        "ALTER TABLE `chat_attachments` ADD CONSTRAINT `chat_attachments_conversation_id_chat_conversations_id_fk` FOREIGN KEY (`conversation_id`) REFERENCES `chat_conversations`(`id`) ON DELETE cascade ON UPDATE no action;",
+        "ALTER TABLE `chat_attachments` ADD CONSTRAINT `chat_attachments_uploader_user_id_users_id_fk` FOREIGN KEY (`uploader_user_id`) REFERENCES `users`(`id`) ON DELETE set null ON UPDATE no action;",
+        "ALTER TABLE `chat_reactions` ADD CONSTRAINT `chat_reactions_message_id_chat_messages_id_fk` FOREIGN KEY (`message_id`) REFERENCES `chat_messages`(`id`) ON DELETE cascade ON UPDATE no action;",
+        "ALTER TABLE `chat_reactions` ADD CONSTRAINT `chat_reactions_user_id_users_id_fk` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE cascade ON UPDATE no action;",
+        "ALTER TABLE `chat_stickers` ADD CONSTRAINT `chat_stickers_created_by_user_id_users_id_fk` FOREIGN KEY (`created_by_user_id`) REFERENCES `users`(`id`) ON DELETE set null ON UPDATE no action;",
+        "CREATE INDEX `chat_messages_parent_idx` ON `chat_messages` (`parent_message_id`,`sent_at`);",
+        "CREATE INDEX `chat_attachments_message_idx` ON `chat_attachments` (`message_id`);",
+        "CREATE INDEX `chat_attachments_conversation_idx` ON `chat_attachments` (`conversation_id`);",
+        "CREATE INDEX `chat_attachments_uploader_idx` ON `chat_attachments` (`uploader_user_id`,`created_at`);",
+        "CREATE INDEX `chat_stickers_kind_idx` ON `chat_stickers` (`kind`,`created_at`);"
+      ]
     }
   ]
 }

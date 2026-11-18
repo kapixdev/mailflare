@@ -129,6 +129,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 			if (detail.event === "message" && detail.message) {
 				if (conversationsRef.current.some((item) => item.id === detail.conversationId)) applyMessage(detail.message, false);
 				else void refresh();
+			} else if (detail.event === "update") {
+				// Edits and reactions don't change the conversation list.
 			} else if (detail.event === "read") {
 				setConversations((list) => list.map((item) => item.id === detail.conversationId ? { ...item, unreadCount: 0 } : item));
 			} else {
