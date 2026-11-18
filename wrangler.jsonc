@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "workspace-kapix",
+	"name": "mailflare",
 	"main": "./worker.ts",
 	"compatibility_date": "2026-05-20",
 	"keep_vars": true,
@@ -18,7 +18,7 @@
 	"services": [
 		{
 			"binding": "WORKER_SELF_REFERENCE",
-			"service": "workspace-kapix",
+			"service": "mailflare",
 		},
 	],
 	"durable_objects": {
