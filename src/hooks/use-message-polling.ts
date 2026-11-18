@@ -78,6 +78,11 @@ export function useMessagePolling(): MessageRealtimeState {
 					}
 					return;
 				}
+				if (parsed.type === "chat") {
+					window.dispatchEvent(new CustomEvent("mailflare:chat", { detail: parsed }));
+					if (fromSocket) channel?.postMessage({ type: "notification", payload } satisfies RealtimeChannelMessage);
+					return;
+				}
 				if (parsed.type === "agent_draft" && parsed.draftId && parsed.mailboxId) {
 					window.dispatchEvent(new CustomEvent("mailflare:agent-draft", { detail: parsed }));
 					dispatchMessagesChanged();

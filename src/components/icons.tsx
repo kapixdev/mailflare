@@ -67,6 +67,8 @@ import {
 	ImageIcon as HugeImageIcon,
 	ImagePlusIcon as HugeImagePlusIcon,
 	InboxIcon as HugeInboxIcon,
+	BubbleChatIcon as HugeBubbleChatIcon,
+	BubbleChatAddIcon as HugeBubbleChatAddIcon,
 	InfoIcon as HugeInfoIcon,
 	ItalicIcon as HugeItalicIcon,
 	KeyRoundIcon as HugeKeyRoundIcon,
@@ -253,6 +255,8 @@ export const HelpCircle = createIcon(HugeHelpCircleIcon, "HelpCircle");
 export const Image = createIcon(HugeImageIcon, "Image");
 export const ImagePlus = createIcon(HugeImagePlusIcon, "ImagePlus");
 export const Inbox = createIcon(HugeInboxIcon, "Inbox");
+export const MessageCircle = createIcon(HugeBubbleChatIcon, "MessageCircle");
+export const MessageCirclePlus = createIcon(HugeBubbleChatAddIcon, "MessageCirclePlus");
 export const Info = createIcon(HugeInfoIcon, "Info");
 export const Italic = createIcon(HugeItalicIcon, "Italic");
 export const KeyRound = createIcon(HugeKeyRoundIcon, "KeyRound");

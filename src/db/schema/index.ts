@@ -1285,6 +1285,46 @@ export const driveShares = sqliteTable("drive_shares", {
 	index("drive_shares_user_idx").on(t.userId),
 ]);
 
+// Team chat: direct messages and group spaces between accounts of this installation.
+// Message times are epoch milliseconds so messages sent within the same second keep their order.
+export const chatConversations = sqliteTable("chat_conversations", {
+	id: text("id").primaryKey(),
+	type: text("type", { enum: ["direct", "space"] }).notNull().default("direct"),
+	name: text("name"),
+	// Both user ids, sorted and joined, so a pair of accounts shares one direct conversation.
+	directKey: text("direct_key"),
+	createdByUserId: text("created_by_user_id").references(() => users.id, { onDelete: "set null" }),
+	createdAt: timestamp("created_at").notNull().$defaultFn(() => new Date()),
+	lastMessageAt: integer("last_message_at").notNull().default(0),
+}, (t) => [
+	uniqueIndex("chat_conversations_direct_key_idx").on(t.directKey),
+]);
+
+export const chatMembers = sqliteTable("chat_members", {
+	id: text("id").primaryKey(),
+	conversationId: text("conversation_id").notNull().references(() => chatConversations.id, { onDelete: "cascade" }),
+	userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+	role: text("role", { enum: ["owner", "member"] }).notNull().default("member"),
+	lastReadAt: integer("last_read_at").notNull().default(0),
+	joinedAt: timestamp("joined_at").notNull().$defaultFn(() => new Date()),
+}, (t) => [
+	uniqueIndex("chat_members_conversation_user_idx").on(t.conversationId, t.userId),
+	index("chat_members_user_idx").on(t.userId),
+]);
+
+export const chatMessages = sqliteTable("chat_messages", {
+	id: text("id").primaryKey(),
+	conversationId: text("conversation_id").notNull().references(() => chatConversations.id, { onDelete: "cascade" }),
+	senderUserId: text("sender_user_id").references(() => users.id, { onDelete: "set null" }),
+	body: text("body").notNull(),
+	sentAt: integer("sent_at").notNull(),
+	editedAt: integer("edited_at"),
+	deletedAt: integer("deleted_at"),
+}, (t) => [
+	index("chat_messages_conversation_sent_idx").on(t.conversationId, t.sentAt),
+	index("chat_messages_sender_idx").on(t.senderUserId),
+]);
+
 export const importJobs = sqliteTable("import_jobs", {
 	id: text("id").primaryKey(),
 	userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -1338,6 +1378,9 @@ export const schema = {
 	driveItems,
 	driveUploadParts,
 	driveShares,
+	chatConversations,
+	chatMembers,
+	chatMessages,
 	auditLogs,
 	backupSettings,
 	backups,

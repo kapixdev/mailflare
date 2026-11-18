@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { CalendarDays, HardDrive, Inbox, More01, UsersRound } from "@/components/icons";
+import { CalendarDays, HardDrive, Inbox, MessageCircle, More01, UsersRound } from "@/components/icons";
 import { useLanguage } from "@/components/language-provider";
 import { useDismissible } from "@/components/use-dismissible";
 import type { AppsMenuProps } from "./mailbox-selector-types";
@@ -17,6 +17,7 @@ export function AppsMenu({ user }: AppsMenuProps) {
 		{ href: "/inbox", label: t("navigation.inbox"), icon: Inbox, show: true },
 		{ href: "/calendar", label: t("account.calendar"), icon: CalendarDays, show: user?.calendarEnabled !== false },
 		{ href: "/drive", label: t("account.drive"), icon: HardDrive, show: user?.driveEnabled !== false },
+		{ href: "/chat", label: t("chat.title"), icon: MessageCircle, show: true },
 		{ href: "/contacts", label: t("navigation.contacts"), icon: UsersRound, show: true },
 	].filter((item) => item.show);
 
