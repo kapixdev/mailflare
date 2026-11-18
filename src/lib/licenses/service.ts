@@ -34,12 +34,13 @@ async function getOrCreateLicenseSettings(env: CloudflareEnv) {
 }
 
 function toLicenseStatus(settings: typeof licenseSettings.$inferSelect): LicenseStatus {
-	const active = settings.state === "active" && (settings.plan === "pro" || settings.plan === "team");
+	// Fork: license gating removed — every installation gets all features with unlimited seats.
+	const active = true;
 	return {
-		plan: active ? settings.plan : "community",
+		plan: "team",
 		state: settings.state,
 		features: parseFeatures(settings.features),
-		seatLimit: active && settings.plan === "pro" ? settings.seatLimit : null,
+		seatLimit: null,
 		instanceId: settings.instanceId,
 		instanceUrl: settings.instanceUrl,
 		active,
@@ -53,20 +54,9 @@ export async function getLicenseStatus(env: CloudflareEnv): Promise<LicenseStatu
 }
 
 export async function getLicenseEntitlements(env: CloudflareEnv): Promise<LicenseEntitlements> {
-	try {
-		const status = await getLicenseStatus(env);
-		// Pro adds accounts up to its seat limit; Team is unlimited and also unlocks shared mailboxes.
-		return {
-			plan: status.plan,
-			canCustomizeBranding: status.active,
-			canManageAccounts: status.active,
-			canShareMailboxes: status.active && status.plan === "team",
-			accountSeatLimit: status.seatLimit,
-			canForwardEmail: status.active,
-		};
-	} catch {
-		return { plan: "community", canCustomizeBranding: false, canManageAccounts: false, canShareMailboxes: false, accountSeatLimit: 0, canForwardEmail: false };
-	}
+	// Fork: license gating removed — all features unlocked, unlimited account seats.
+	void env;
+	return { plan: "team", canCustomizeBranding: true, canManageAccounts: true, canShareMailboxes: true, accountSeatLimit: null, canForwardEmail: true };
 }
 
 async function updateLicenseFromPaymug(
